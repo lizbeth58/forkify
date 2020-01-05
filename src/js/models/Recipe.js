@@ -12,7 +12,6 @@ export default class Recipe {
       const res = await axios(
         `https://forkify-api.herokuapp.com/api/get?rId=${this.id}`
       );
-      console.log(res);
       //populate model
       this.title = res.data.recipe.title;
       this.author = res.data.recipe.publisher;

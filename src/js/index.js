@@ -1,10 +1,12 @@
 import Search from './models/Search';
 import Recipe from './models/Recipe';
 import List from './models/List';
+import Likes from './models/Likes';
 import { elements, renderLoader, clearLoader } from './views/base';
 import * as searchView from './views/searchView';
 import * as recipeView from './views/recipeView';
 import * as listView from './views/listView';
+import * as likesView from './views/likesView';
 
 //app state
 const state = {};
@@ -75,7 +77,7 @@ const controlRecipe = async () => {
 
       clearLoader();
       //render results
-      recipeView.renderRecipe(state.recipe);
+      recipeView.renderRecipe(state.recipe, state.likes.isLiked(id));
     } catch (e) {
       alert(e);
     }
@@ -93,6 +95,29 @@ const controlList = () => {
   });
 };
 
+const controlLike = id => {
+  if (!state.likes) state.likes = new Likes();
+
+  const currentId = state.recipe.id;
+
+  if (!state.likes.isLiked(currentId)) {
+    const newLike = state.likes.addLike(
+      currentId,
+      state.recipe.title,
+      state.recipe.author,
+      state.recipe.img
+    );
+    //toggle like button
+    likesView.toggleLikeBtn(true);
+    likesView.renderLike(newLike);
+  } else {
+    state.likes.deleteLike(currentId);
+    likesView.toggleLikeBtn(false);
+    likesView.deleteLike(currentId);
+  }
+  likesView.toggleLikeMenu(state.likes.getNumLikes());
+};
+
 elements.shopping.addEventListener('click', e => {
   const id = e.target.closest('.shopping__item').dataset.itemid;
 
@@ -108,6 +133,13 @@ elements.shopping.addEventListener('click', e => {
 //recipe listeners
 window.addEventListener('hashchange', controlRecipe);
 
+window.addEventListener('load', () => {
+  state.likes = new Likes();
+  state.likes.readStorage();
+  likesView.toggleLikeMenu(state.likes.getNumLikes());
+  state.likes.likes.forEach(like => likesView.renderLike(like));
+});
+
 //recipe button clicks
 elements.recipe.addEventListener('click', e => {
   if (e.target.matches('.btn-decrease, .btn-decrease *')) {
@@ -120,5 +152,7 @@ elements.recipe.addEventListener('click', e => {
     recipeView.updateServingsIngredients(state.recipe);
   } else if (e.target.matches('.recipe__btn, .recipe__btn *')) {
     controlList();
+  } else if (e.target.matches('.recipe__love, .recipe__love *')) {
+    controlLike();
   }
 });
